@@ -1,0 +1,149 @@
+qiime tools import --type EMPSingleEndSequences --input-path emp-single-end-sequences -output-path emp-single-end-sequences.qza
+
+qiime demux emp-single --i-seqs emp-single-end-sequences.qza  --m-barcodes-file m16.tsv --m-barcodes-column barcode --o-per-sample-sequences demux.qza
+
+qiime dada2 denoise-single \
+  --i-demultiplexed-seqs demux.qza \
+  --p-trim-left 0 \
+  --p-trunc-len 260 \
+  --o-representative-sequences dada2_o/rep-seqs-dada2.qza \
+  --o-table dada2_o/table-dada2.qza \
+  --o-denoising-stats dada2_o/stats-dada2.qza
+
+
+qiime diversity core-metrics-phylogenetic \
+    --i-phylogeny dada2_o/phylogenetic_tree/rooted-tree.qza \
+    --i-table dada2_o/table-dada2.qza  \
+    --p-sampling-depth 1000 \
+    --m-metadata-file m16.tsv \
+    --output-dir core_metrics_1000
+
+qiime diversity core-metrics-phylogenetic \
+    --i-phylogeny dada2_o/phylogenetic_tree/rooted-tree.qza \
+    --i-table dada2_o/table-dada2.qza  \
+    --p-sampling-depth 100 \
+    --m-metadata-file m16.tsv \
+    --output-dir core_metrics_100
+
+for i in core_metrics_1000/*vector.qza ;
+    do qiime diversity alpha-group-significance \
+    --i-alpha-diversity $i \
+    --m-metadata-file m16.tsv \
+    --o-visualization ${i%.qza}.qzv ; 
+done
+
+for i in core_metrics_100/*vector.qza ;
+    do qiime diversity alpha-group-significance \
+    --i-alpha-diversity $i \
+    --m-metadata-file m16.tsv \
+    --o-visualization ${i%.qza}.qzv ; 
+done
+
+qiime diversity alpha-rarefaction \
+    --i-table dada2_o/table-dada2.qza \
+    --i-phylogeny dada2_o/phylogenetic_tree/rooted-tree.qza \
+    --p-max-depth 14500 \
+    --m-metadata-file m16.tsv \
+    --o-visualization dada2_o/alpha-rarefaction-plot/alpha-rarefaction.qzv
+    
+    qiime feature-classifier classify-sklearn \
+    --i-classifier gg-13-8-99-515-806-nb-classifier.qza \
+    --i-reads dada2_o/rep-seqs-dada2.qza \
+    --o-classification dada2_o/taxonomic_analysis/taxonomy.qza
+
+qiime taxa barplot \
+  --i-table dada2_o/table-dada2.qza \
+  --i-taxonomy dada2_o/taxonomic_analysis/taxonomy.qza \
+  --m-metadata-file m16.tsv \
+  --o-visualization dada2_o/taxonomic_analysis/taxa-bar-plots.qzv
+
+qiime feature-table filter-samples \
+  --i-table dada2_o/table-dada2.qza \
+  --m-metadata-file exp12_metadata_V2.tsv \
+  --p-where "experiment='12'" \
+  --o-filtered-table dada2_o/exp12only-table.qza    
+
+qiime tools export --input-path dada2_o/phylogenetic_tree/unrooted-tree.qza \
+    --output-dir Phyloseq
+qiime tools export --input-path dada2_o/phylogenetic_tree/unrooted-tree.qza \
+    --output-path /Users/billy/Desktop/THS_project/Phyloseq 
+
+qiime tools export  --input-path dada2_o/taxonomic_analysis/taxonomy.qza \
+    --output-path /Users/billy/Desktop/THS_project/Phyloseq 
+
+qiime tools export  --input-path dada2_o/table-dada2.qza \
+    --output-path /Users/billy/Desktop/THS_project/Phyloseq 
+
+Alpha diversity
+#For visualizing at
+qiime tools view core_metrics_1000/evenness_vector.qzv
+qiime tools view core_metrics_1000/faith_pd_vector.qzv
+qiime tools view core_metrics_1000/observed_otus_vector.qzv
+qiime tools view core_metrics_1000/shannon_vector.qzv
+
+qiime tools view core_metrics_100/evenness_vector.qzv
+qiime tools view core_metrics_100/faith_pd_vector.qzv
+qiime tools view core_metrics_100/observed_otus_vector.qzv
+qiime tools view core_metrics_100/shannon_vector.qzv
+
+
+silva-132-99-515-806-nb-classifier.qza
+#Making the taxonomy artifact
+qiime feature-classifier classify-sklearn \
+    --i-classifier silva-132-99-515-806-nb-classifier.qza \
+    --i-reads dada2_o/rep-seqs-dada2.qza \
+    --o-classification dada2_o/taxonomic_analysis/taxonomy.qza
+
+
+qiime tools export \
+  --input-path /Users/billy/Desktop/THS_project/silva-132-99-515-806-nb-classifier.qza \
+  --output-path /Users/billy/Desktop/THS_project/silva-132-99-taxonomy_spaces
+
+
+qiime tools export \
+  --input-path /Users/billy/Desktop/THS_project/silva-132-99-515-806-nb-classifier.qza \
+  --output-path taxonomy-with-spaces
+qiime metadata tabulate \
+  --m-input-file taxonomy-with-spaces/taxonomy.tsv  \
+  --o-visualization taxonomy-as-metadata.qzv
+qiime tools export taxonomy-as-metadata.qzv \
+  --output-dir taxonomy-as-metadata
+qiime tools import \
+  --type 'FeatureData[Taxonomy]' \
+  --input-path taxonomy-as-metadata/metadata.tsv \
+  --output-path taxonomy-without-spaces.qza
+
+qiime tools export \
+  --input-path feature-table.qza \
+  --output-path exported-feature-table
+
+
+
+## taxa plot with Silva
+qiime taxa barplot \
+  --i-table dada2_o/table-dada2.qza \
+  --i-taxonomy dada2_o/taxonomic_analysis/taxonomy.qza \
+  --m-metadata-file mapping_file_16SS.tsv \
+  --o-visualization dada2_o/taxonomic_analysis/taxa-bar-plots.qzv
+
+qiime tools export --input-path dada2_o/phylogenetic_tree/unrooted-tree.qza --output-path Phyloseq/
+qiime tools export --input-path dada2_o/taxonomic_analysis/taxonomy.qza \
+    --output-path Phyloseq/
+qiime tools export --input-path dada2_o/table-dada2.qza \
+    --output-path Phyloseq/
+
+biom add-metadata \
+    --input-fp Phyloseq/feature-table.biom \
+    --output-fp Phyloseq/table-with-taxonomy.biom \
+    --observation-metadata-fp Phyloseq/biom-taxonomy.tsv \
+    --sc-separated taxonomy 
+
+##to look at single sample
+qiime feature-table tabulate-seqs \
+  --i-data rep-seqs.qza \
+  --o-visualization rep-seqs.qzv
+
+
+per_library_stats.py -I
+
+biom convert -i table.biom -o table.from_biom_w_taxonomy.txt --to-tsv --header-key taxonomy
