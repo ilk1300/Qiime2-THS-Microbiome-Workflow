@@ -1,3 +1,3 @@
-# Qiime2-and-Qiime1-Microbiome
+# Qiime2 Microbiome Analysis Workflow
 
-Here is the coding part to the Third Hand Smoke Microbiome Project
+This folder contains codes and mapping files to analyze the Third Hand Smoke Microbiome Project.
