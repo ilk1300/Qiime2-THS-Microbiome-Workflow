@@ -1,4 +1,4 @@
-# Qiime2 Microbiome Analysis Workflow
+# Third Hand Smoke Microbiome Analysis Workflow
 
 This repository contains codes and mapping files to analyze the Third Hand Smoke Microbiome Project.
 
