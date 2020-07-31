@@ -1,4 +1,4 @@
-#Third Hand Smoke Microbiome Analysis Workflow
+##  Third Hand Smoke Microbiome log2fold analysis
 
 This repository contains all envi from the THS homes to generate log2fold analysis and more. 
 
