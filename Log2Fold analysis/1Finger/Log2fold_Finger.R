@@ -92,8 +92,8 @@ library("phyloseq")
 # }
 #       
 #       
- otu = "FingerOTU5_15.csv" 
- meta = "Finger_meta_Nic.csv"
+ otu = "finger_otu_reduced11.csv" 
+ meta = "Finger_metadataM.csv"
 # 
 
 #abund_table<-read.csv("finger_otu.csv",row.names=1,check.names=FALSE)
@@ -143,17 +143,9 @@ sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(physeq)[rownames(sigtab), 
 
 library("ggplot2")
 pdf("FingerReducedM.pdf")
+#plot_bar(subsetA,"category","Abundance" )
 theme_set(theme_bw())
 sigtabgen = subset(sigtab, !is.na(Genus))
-x = tapply(sigtabgen$log2FoldChange, sigtabgen$Genus, function(x) max(x))
-x = sort(x, FALSE)
-sigtabgen$Genus = factor(as.character(sigtabgen$Genus), levels=names(x))
-
-sigtabgen2=sigtabgen[abs(sigtabgen$log2FoldChange) > 6.0,]
-sigtabgen3= sigtabgen2[order(sigtabgen2$log2FoldChange,decreasing = TRUE),]
-
-#plot_bar(subsetA,"category","Abundance" )
-
 #newdata <- sigtabgen[order(sigtabgen$log2FoldChange),]
 #sigtabgen2= sigtab[order(sigtab$log2FoldChange < -2 & sigtab$log2FoldChange > 2,decreasing = TRUE)]
 # Phylum order
@@ -161,54 +153,26 @@ sigtabgen3= sigtabgen2[order(sigtabgen2$log2FoldChange,decreasing = TRUE),]
 #x = sort(x, TRUE)
 #sigtabgen$Phylum = factor(as.character(sigtabgen$Phylum), levels=names(x))
 # Genus order
+sigtabgen2= sigtabgen[order(sigtab$log2FoldChange < -7 && sigtab$log2FoldChange > 7,decreasing = TRUE)]
 
-ggplot(sigtabgen3, aes(y=Genus, x=log2FoldChange))+
-  ggtitle("Finger Microbiome") +
-  geom_vline(xintercept = 0.0, color = "gray", size = 1) +
-  #geom_point(size=8, colour="black") + 
-  geom_point(position=position_jitter(h=0.1, w=0.1),
-             shape = 21, alpha = 0.5, size = 8, fill="black")+
-  scale_color_manual(aesthetics = c("colour", "fill"))+
-  theme_bw(base_size = 18)+
-  labs(x=expression("Ratio:"~"THS-polluted/THS-free"~"Homes"~(log[2])  ))+
-  #xlab("Ratio: THS-polluted vs THS-free Homes Log[2]") +
-  theme(
-    plot.title = element_text(size = 16, face = "bold",hjust=0.5),
-    axis.title.x = element_text(size = 15),
-    axis.title.y = element_text(size = 15, angle = 90),
-    axis.text.x = element_text( vjust = 1, size=14),
-    axis.text.y = element_text(face = "italic",size=14), 
-    legend.position = "none")
-#x=expression(Production~rate~" "~mu~moles~NO[3]^{"-"}-N~Kg^{-1})
-#theme(axis.text.y = blue.bold.italic.16.text)
-#xlab(bquote(~Log[2]~'( fold change )' ))
+x = tapply(sigtabgen$log2FoldChange, sigtabgen$Genus, function(x) max(x))
+x = sort(x, FALSE)
+sigtabgen$Genus = factor(as.character(sigtabgen$Genus), levels=names(x))
+ggplot(sigtabgen2, aes(y=Genus, x=log2FoldChange))+
+  ggtitle("Finger Microbiome: Smoking/NonSmoking with Nicotine Con.") +
+  geom_vline(xintercept = 0.0, color = "gray", size = 0.01) +
+  geom_point(size=5) + theme_bw()+
+  xlab(bquote(~Log[2]~'( fold change )' )
+  #theme(text= element_text(size=10),axis.text.x = element_text(angle = -90, hjust = 0, vjust=0.5),legend.position = "none")
+
+
+theme(text= element_text(size=10),
+      axis.text.x = element_text(angle = -90, hjust = 0, vjust=0.5),
+      legend.position = "none")
+
+
 dev.off()
-
-
-
-
-##PERMANOVA##
-library(vegan)
-library("ape")
-metadata <- as(sample_data(physeq), "data.frame")
-random_tree = rtree(ntaxa(physeq), rooted=TRUE, tip.label=taxa_names(physeq))
-#plot(random_tree)
-physeq2 = phyloseq(OTU, TAX, SAM, random_tree)
-unifrac.dist.finger <- UniFrac(physeq2, 
-                        weighted = FALSE, 
-                        normalized = TRUE,  
-                        parallel = FALSE, 
-                        fast = TRUE)
-metadf <- data.frame(sample_data(physeq))
-permanova <- adonis(unifrac.dist.finger ~ category, data = metadf,permutations = 9999)
-
-permanova
-
-ps.disper <- betadisper(unifrac.dist, metadf$category)
-permutest(ps.disper, pairwise = TRUE)
-
-
-
+# 
 # 
 # ###option 2###
 #   top25otus = names(sort(taxa_sums(physeq), TRUE)[1:25])

@@ -84,11 +84,19 @@ sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(physeq)[rownames(sigtab), 
 
 
 #PLOT GRAPH & SAVE
-
 library("ggplot2")
 pdf("Ear0T_N_5_2_20.pdf")
 theme_set(theme_bw())
 sigtabgen = subset(sigtab, !is.na(Genus))
+#t = subset(t, !is.na(Genus))      ###MAKE SURE CHANGE ALL sigtabgen to "t"! 
+
+#Phylum order
+#x = tapply(sigtabgen$log2FoldChange, sigtabgen$Phylum, function(x) max(x))
+#x = sort(x, TRUE)
+#sigtabgen$Phylum = factor(as.character(sigtabgen$Phylum), levels=names(x))
+
+#Genus order
+
 x = tapply(sigtabgen$log2FoldChange, sigtabgen$Genus, function(x) max(x))
 x = sort(x, FALSE)
 sigtabgen$Genus = factor(as.character(sigtabgen$Genus), levels=names(x))
@@ -98,24 +106,11 @@ sigtabgen3= sigtabgen2[order(sigtabgen2$log2FoldChange,decreasing = TRUE),]
 
 ggplot(sigtabgen3, aes(y=Genus, x=log2FoldChange))+
   ggtitle("Ear Microbiome: Smoking/NonSmoking") +
-  geom_vline(xintercept = 0.0, color = "gray", size = 1) +
-  geom_point(size=8, colour="black") + 
-  # geom_point(position=position_jitter(h=0.1, w=0.1),
-  #            shape = 21, alpha = 0.5, size = 8, fill="black")+
-  #scale_color_manual(aesthetics = c("colour", "fill"))+
-  theme_bw(base_size = 18)+
-  labs(x=expression(Ratio:THS-polluted~vs~THS-free~Homes~'(log)'[2] ))+
-  #xlab("Ratio: THS-polluted vs THS-free Homes Log[2]") +
-  theme(
-    plot.title = element_text(size = 16, face = "bold"),
-    axis.title.x = element_text(size = 15),
-    axis.title.y = element_text(size = 15, angle = 90),
-    axis.text.x = element_text( vjust = 1, size=14),
-    axis.text.y = element_text(face = "italic",size=14), 
-    legend.position = "none")
-#x=expression(Production~rate~" "~mu~moles~NO[3]^{"-"}-N~Kg^{-1})
-#theme(axis.text.y = blue.bold.italic.16.text)
-#xlab(bquote(~Log[2]~'( fold change )' ))
+  geom_vline(xintercept = 0.0, color = "gray", size = 0.01) +
+  geom_point(size=4) + theme_bw()+
+  xlab(bquote(~Log[2]~'( fold change )' ))
+theme(text= element_text(size=10),axis.text.x = element_text(angle = -90, hjust = 0, vjust=0.5),legend.position = "none")
+
 dev.off()
 
 
@@ -130,27 +125,6 @@ write.table( nGcounts,
              sep=',', 
              row.names=T, 
              col.names=F )
-
-##PERMANOVA##
-library(vegan)
-library("ape")
-metadata <- as(sample_data(physeq), "data.frame")
-random_tree = rtree(ntaxa(physeq), rooted=TRUE, tip.label=taxa_names(physeq))
-#plot(random_tree)
-physeq2 = phyloseq(OTU, TAX, SAM, random_tree)
-unifrac.dist.ear <- UniFrac(physeq2, 
-                               weighted = FALSE, 
-                               normalized = TRUE,  
-                               parallel = FALSE, 
-                               fast = TRUE)
-metadf <- data.frame(sample_data(physeq))
-permanova <- adonis(unifrac.dist.ear ~ category, data = metadf)
-
-permanova
-
-ps.disper <- betadisper(unifrac.dist.ear, metadf$category)
-permutest(ps.disper, pairwise = TRUE)
-
 
 # 
 # figure <- ggarrange(sp, bp + font("x.text", size = 10),
